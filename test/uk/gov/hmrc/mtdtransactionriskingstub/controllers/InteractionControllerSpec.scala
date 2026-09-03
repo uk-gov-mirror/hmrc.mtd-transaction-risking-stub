@@ -25,12 +25,12 @@ import play.api.libs.json.{JsValue, Json}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentAsJson, contentType, defaultAwaitTimeout, status, stubControllerComponents}
 
-class InteractionStubControllerSpec extends AnyWordSpec, Matchers:
+class InteractionControllerSpec extends AnyWordSpec, Matchers:
 
   private given system: ActorSystem  = ActorSystem("test")
   private given mat:    Materializer = Materializer(system)
 
-  private val controller = new InteractionStubController(stubControllerComponents())
+  private val controller = new InteractionController(stubControllerComponents())
 
   private def interactionJson(feedbackId: String): JsValue = Json.parse(
     s"""

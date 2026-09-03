@@ -26,7 +26,7 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
 @Singleton
-class ValidateStubController @Inject()(cc: ControllerComponents) extends BackendController(cc), Logging:
+class ValidateController @Inject()(cc: ControllerComponents) extends BackendController(cc), Logging:
 
   def validateReturn(vrn: String): Action[JsValue] = Action.async(parse.json) { request =>
 

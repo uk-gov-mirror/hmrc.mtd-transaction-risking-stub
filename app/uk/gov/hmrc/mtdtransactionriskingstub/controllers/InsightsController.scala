@@ -27,7 +27,7 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
 @Singleton
-class InsightsStubController @Inject()(
+class InsightsController @Inject()(
                                         cc: ControllerComponents,
                                         insightsService: InsightsStubService
                                       ) extends BackendController(cc), Logging:

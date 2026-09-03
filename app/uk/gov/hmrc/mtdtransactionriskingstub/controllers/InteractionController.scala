@@ -26,7 +26,7 @@ import scala.concurrent.Future
 
 // Stubs the interactions datastore which reached once RDS succeeds
 @Singleton
-class InteractionStubController @Inject() (cc: ControllerComponents) extends BackendController(cc), Logging:
+class InteractionController @Inject()(cc: ControllerComponents) extends BackendController(cc), Logging:
 
   private val badRequestTrigger        = "rsd-bad-request"
   private val serverErrorTrigger       = "rsd-server-error"
@@ -37,7 +37,7 @@ class InteractionStubController @Inject() (cc: ControllerComponents) extends Bac
     val correlationId = request.headers.get("CorrelationId").getOrElse("no-correlation-id")
     val feedbackId    = (request.body \ "feedbackId").asOpt[String].getOrElse("")
 
-    logger.info(s"$correlationId::[InteractionStubController][store] received interaction for feedbackId $feedbackId")
+    logger.info(s"$correlationId::[InteractionController][store] received interaction for feedbackId $feedbackId")
 
     val result = feedbackId match
 

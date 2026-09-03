@@ -26,13 +26,13 @@ import play.api.test.{FakeRequest, Helpers}
 import play.api.test.Helpers.*
 import uk.gov.hmrc.mtdtransactionriskingstub.services.InsightsStubService
 
-class InsightsStubControllerSpec extends AnyWordSpec, Matchers:
+class InsightsControllerSpec extends AnyWordSpec, Matchers:
 
   private given system: ActorSystem  = ActorSystem("test")
   private given materializer:    Materializer = Materializer(system)
 
   private val controller =
-    new InsightsStubController(Helpers.stubControllerComponents(), new InsightsStubService)
+    new InsightsController(Helpers.stubControllerComponents(), new InsightsStubService)
 
   "checkInsights" should:
 
