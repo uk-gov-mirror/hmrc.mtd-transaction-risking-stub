@@ -1,6 +1,9 @@
 # microservice specific routes
 
-POST        /check/insights             uk.gov.hmrc.mtdtransactionriskingstub.controllers.InsightsStubController.checkInsights()
+# stubbed gov
 POST        /feedback                   uk.gov.hmrc.mtdtransactionriskingstub.controllers.FeedbackStubController.requestFeedback()
 POST        /acknowledge                uk.gov.hmrc.mtdtransactionriskingstub.controllers.AcknowledgeStubController.requestAcknowledge()
+
+POST        /check/insights             uk.gov.hmrc.mtdtransactionriskingstub.controllers.InsightsStubController.checkInsights()
 POST        /internal/validate/:vrn     uk.gov.hmrc.mtdtransactionriskingstub.controllers.ValidateStubController.validateReturn(vrn: String)
+POST        /rsd/receive-and-store      uk.gov.hmrc.mtdtransactionriskingstub.controllers.InteractionStubController.store()
