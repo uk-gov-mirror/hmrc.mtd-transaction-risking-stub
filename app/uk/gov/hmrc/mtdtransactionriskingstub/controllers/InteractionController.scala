@@ -19,6 +19,7 @@ package uk.gov.hmrc.mtdtransactionriskingstub.controllers
 import play.api.Logging
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents}
+import uk.gov.hmrc.mtdtransactionriskingstub.utils.StubPeriodKeys
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.{Inject, Singleton}
@@ -26,22 +27,19 @@ import scala.concurrent.Future
 
 // Stubs the interactions datastore which reached once RDS succeeds
 @Singleton
-class InteractionController @Inject()(cc: ControllerComponents) extends BackendController(cc), Logging:
-
-  private val badRequestTrigger        = "rsd-bad-request"
-  private val serverErrorTrigger       = "rsd-server-error"
-  private val serviceUnavailableTrigger = "rsd-unavailable"
+class InteractionController @Inject() (cc: ControllerComponents) extends BackendController(cc), Logging:
 
   def store(): Action[JsValue] = Action.async(parse.json) { request =>
 
     val correlationId = request.headers.get("CorrelationId").getOrElse("no-correlation-id")
     val feedbackId    = (request.body \ "feedbackId").asOpt[String].getOrElse("")
+    val periodKey     = (request.body \ "metadata" \ 0 \ "additionalProperties" \ "periodKey").asOpt[String].getOrElse("")
 
-    logger.info(s"$correlationId::[InteractionController][store] received interaction for feedbackId $feedbackId")
+    logger.info(s"$correlationId::[InteractionController][store] received interaction for feedbackId $feedbackId, periodKey $periodKey")
 
-    val result = feedbackId match
+    val result = periodKey match
 
-      case `badRequestTrigger` =>
+      case StubPeriodKeys.rsdBadRequest =>
         BadRequest(Json.obj(
           "error"     -> "Bad Request",
           "errors"    -> Json.arr(Json.obj("error" -> "eventName must not be blank")),
@@ -50,10 +48,10 @@ class InteractionController @Inject()(cc: ControllerComponents) extends BackendC
           "timestamp" -> "2026-08-13T09:00:00Z"
         ))
 
-      case `serverErrorTrigger` =>
+      case StubPeriodKeys.rsdServerError =>
         InternalServerError(Json.obj())
 
-      case `serviceUnavailableTrigger` =>
+      case StubPeriodKeys.rsdServiceUnavailable =>
         ServiceUnavailable(hipOriginResponse("internal", "service temporarily unavailable"))
           .as("application/json;charset=UTF-8")
 
@@ -68,4 +66,3 @@ class InteractionController @Inject()(cc: ControllerComponents) extends BackendC
       "origin"   -> "HIP",
       "response" -> Json.obj("failures" -> Json.arr(Json.obj("type" -> failureType, "reason" -> reason)))
     )
-    

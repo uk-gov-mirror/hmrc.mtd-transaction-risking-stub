@@ -32,55 +32,55 @@ class InteractionControllerSpec extends AnyWordSpec, Matchers:
 
   private val controller = new InteractionController(stubControllerComponents())
 
-  private def interactionJson(feedbackId: String): JsValue = Json.parse(
+  private def interactionJson(periodKey: String): JsValue = Json.parse(
     s"""
        |{
        |  "serviceRegime": "vat-assist",
        |  "eventName": "generate-report",
-       |  "feedbackId": "$feedbackId",
+       |  "periodKey": "random-feedback-id",
        |  "eventTimestamp": "2026-08-13T09:00:00Z",
        |  "metadata": [
        |    {
        |      "vrn": "123456789",
        |      "start": "2026-01-01",
        |      "end": "2026-03-31",
-       |      "additionalProperties": { "periodKey": "AB12" }
+       |      "additionalProperties": { "periodKey": "$periodKey" }
        |    }
        |  ],
        |  "payload": {
-       |    "reportId": "$feedbackId",
+       |    "reportId": "random-feedback-id",
        |    "messages": []
        |  }
        |}
        |""".stripMargin
   )
 
-  private def requestWith(feedbackId: String, correlationId: Option[String] = None) =
-    val base = FakeRequest("POST", "/rsd/receive-and-store").withBody(interactionJson(feedbackId))
+  private def requestWith(periodKey: String, correlationId: Option[String] = None) =
+    val base = FakeRequest("POST", "/rsd/receive-and-store").withBody(interactionJson(periodKey))
     correlationId.fold(base)(id => base.withHeaders("CorrelationId" -> id))
 
   "store" should:
 
-    "return 204 for a normal feedbackId" in:
-      val result = controller.store()(requestWith("f2fb30e5-4ab6-4a29-b3c1-c00000000001"))
+    "return 204 for a normal periodKey" in:
+      val result = controller.store()(requestWith("AB12"))
 
       status(result) shouldBe NO_CONTENT
 
-    "return 400 with the ErrorMessages shape when the feedbackId is rsd-bad-request" in:
-      val result = controller.store()(requestWith("rsd-bad-request"))
+    "return 400 with the ErrorMessages shape when the periodKey is rsd-bad-request" in:
+      val result = controller.store()(requestWith("RS01"))
 
       status(result) shouldBe BAD_REQUEST
       (contentAsJson(result) \ "status").as[Int] shouldBe 400
       (contentAsJson(result) \ "errors").as[Seq[JsValue]] should not be empty
 
-    "return 500 with an empty body when the feedbackId is rsd-server-error" in:
-      val result = controller.store()(requestWith("rsd-server-error"))
+    "return 500 with an empty body when the periodKey is RS02" in:
+      val result = controller.store()(requestWith("RS02"))
 
       status(result) shouldBe INTERNAL_SERVER_ERROR
       contentAsJson(result) shouldBe Json.obj()
 
-    "return 503 with the HIP-originResponse shape when the feedbackId is rsd-unavailable" in:
-      val result = controller.store()(requestWith("rsd-unavailable"))
+    "return 503 with the HIP-originResponse shape when the periodKey is RSO3" in:
+      val result = controller.store()(requestWith("RS03"))
 
       status(result) shouldBe SERVICE_UNAVAILABLE
       contentType(result) shouldBe Some("application/json")
