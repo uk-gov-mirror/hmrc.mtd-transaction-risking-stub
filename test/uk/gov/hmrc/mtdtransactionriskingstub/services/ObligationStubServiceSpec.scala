@@ -16,25 +16,40 @@
 
 package uk.gov.hmrc.mtdtransactionriskingstub.services
 
-import org.scalatest.EitherValues.convertLeftProjectionToValuable
-import uk.gov.hmrc.mtdtransactionriskingstub.models.StubObligation
+import org.scalatest.EitherValues
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import uk.gov.hmrc.mtdtransactionriskingstub.utils.StubPeriodKeys
 
-import java.time.LocalDate
+class ObligationStubServiceSpec extends AnyWordSpec, Matchers, EitherValues:
 
-class ObligationStubServiceSpec extends AnyWordSpec, Matchers:
 
-  "lookupByPeriodKey" should:
+  "lookupByPeriodKey" should :
 
-    "return Right(obligation) when the period key is known and the end date is in the past" in:
-      ObligationStubService.lookupByPeriodKey("AB12",LocalDate.parse("2026-04-01")) shouldBe Right(StubObligation("AB12", "2026-01-01", "2026-03-31", "2026-05-07"))
+    "return PERIOD_KEY_NOT_FOUND for the reserved not-found key" in :
+      ObligationStubService.lookupByPeriodKey(StubPeriodKeys.periodKeyNotFound).left.value.code shouldBe "PERIOD_KEY_NOT_FOUND"
 
-    "return Left(TAX_PERIOD_NOT_ENDED) when the period key is known and today equals the end date" in:
-      ObligationStubService.lookupByPeriodKey("AB12", LocalDate.parse("2026-03-31")).left.value.code shouldBe "TAX_PERIOD_NOT_ENDED"
+    "return TAX_PERIOD_NOT_ENDED for the reserved not-ended key" in :
+      ObligationStubService.lookupByPeriodKey(StubPeriodKeys.taxPeriodNotEnded).left.value.code shouldBe "TAX_PERIOD_NOT_ENDED"
 
-    "return Left(TAX_PERIOD_NOT_ENDED) when the period key is known and the end date is in the future" in:
-      ObligationStubService.lookupByPeriodKey("AB12", LocalDate.parse("2026-03-01")).left.value.code shouldBe "TAX_PERIOD_NOT_ENDED"
+    "return an ended obligation for any other key" in :
+      val obligation = ObligationStubService.lookupByPeriodKey("AB12").value
 
-    "return Left(PERIOD_KEY_NOT_FOUND) when the period key is not in the hardcoded set" in:
-      ObligationStubService.lookupByPeriodKey("ZZZZ", LocalDate.parse("2026-04-01")).left.value.code shouldBe "PERIOD_KEY_NOT_FOUND"
+      obligation.periodKey shouldBe "AB12"
+      obligation.end shouldBe "2026-03-31"
+
+    "echo the requested period key back on the obligation" in :
+      ObligationStubService.lookupByPeriodKey("XY45").value.periodKey shouldBe "XY45"
+
+    "return an ended obligation for the RDS trigger keys, so requests reach RDS" in :
+      val rdsKeys = Seq(
+        StubPeriodKeys.rdsBadRequest,
+        StubPeriodKeys.rdsNotFound,
+        StubPeriodKeys.rdsServiceUnavailable,
+        StubPeriodKeys.rdsNoFeedback,
+        StubPeriodKeys.rdsMalformedReport
+      )
+
+      rdsKeys.foreach { key =>
+        withClue(s"for period key $key: ")(ObligationStubService.lookupByPeriodKey(key).value.periodKey shouldBe key)
+      }

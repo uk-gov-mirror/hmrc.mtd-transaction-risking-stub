@@ -25,12 +25,12 @@ import play.api.libs.json.{JsObject, JsValue, Json}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentAsJson, defaultAwaitTimeout, header, status, stubControllerComponents}
 
-class ValidateStubControllerSpec extends AnyWordSpec, Matchers:
+class ValidateControllerSpec extends AnyWordSpec, Matchers:
 
   private given system: ActorSystem  = ActorSystem("test")
   private given mat:    Materializer = Materializer(system)
 
-  private val controller = new ValidateStubController(stubControllerComponents())
+  private val controller = new ValidateController(stubControllerComponents())
   private val vrn        = "123456789"
 
   private val validBody: JsValue = Json.parse(
@@ -75,7 +75,7 @@ class ValidateStubControllerSpec extends AnyWordSpec, Matchers:
       header("X-CorrelationId", result) shouldBe Some("test-id")
 
     "return 400 TAX_PERIOD_NOT_ENDED for a period that has not ended" in :
-      val requestBody = validBody.as[JsObject] + ("periodKey" -> Json.toJson("AB14"))
+      val requestBody = validBody.as[JsObject] + ("periodKey" -> Json.toJson("ZZ98"))
       val result     = controller.validateReturn(vrn)(requestWith(requestBody, Some("test-id")))
       status(result) shouldBe BAD_REQUEST
       (contentAsJson(result) \ "code").as[String] shouldBe "TAX_PERIOD_NOT_ENDED"

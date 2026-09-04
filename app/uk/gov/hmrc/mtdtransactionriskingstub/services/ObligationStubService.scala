@@ -17,32 +17,22 @@
 package uk.gov.hmrc.mtdtransactionriskingstub.services
 
 import uk.gov.hmrc.mtdtransactionriskingstub.models.StubObligation
-import uk.gov.hmrc.mtdtransactionriskingstub.utils.ValidationStubError
+import uk.gov.hmrc.mtdtransactionriskingstub.utils.{StubPeriodKeys, ValidationStubError}
 
-import java.time.LocalDate
-
+// Resolves a period key to an open obligation
 object ObligationStubService:
 
-  private val obligations: Map[String, StubObligation] = Map(
-    "AB12" -> StubObligation("AB12", "2026-01-01", "2026-03-31", "2026-05-07"), // tax period ended
-    "AB13" -> StubObligation("AB13", "2026-04-01", "2026-06-30", "2036-08-07"), // tax period ended
-    "AB14" -> StubObligation("AB14", "2026-07-01", "2036-09-30", "2036-11-07"),
-    "AB15" -> StubObligation("AB15", "2025-10-01", "2035-12-31", "2036-02-07")
-  )
+  def lookupByPeriodKey(periodKey: String): Either[ValidationStubError, StubObligation] =
+    periodKey match
+      case StubPeriodKeys.periodKeyNotFound => Left(periodKeyNotFoundError)
+      case StubPeriodKeys.taxPeriodNotEnded => Left(taxPeriodNotEndedError)
+      case _                                => Right(endedObligation(periodKey))
 
-  private val taxPeriodNotEnded =
+  private def endedObligation(periodKey: String): StubObligation =
+    StubObligation(periodKey, start = "2026-01-01", end = "2026-03-31", due = "2026-05-07")
+
+  private val taxPeriodNotEndedError =
     ValidationStubError("TAX_PERIOD_NOT_ENDED", "Tax period not ended", None, selfWraps = false)
 
-  private val periodKeyNotFound =
+  private val periodKeyNotFoundError =
     ValidationStubError("PERIOD_KEY_NOT_FOUND", "Period key not found", None, selfWraps = false)
-    
-    
-  /** Returns Right(obligation) if the period has ended (or end date is unknown), Left(error) otherwise. */
-  def lookupByPeriodKey(periodKey: String, today: LocalDate = LocalDate.now()): Either[ValidationStubError, StubObligation] =
-    obligations.get(periodKey) match
-      case None => Left(periodKeyNotFound)
-
-      case Some(obligation) =>
-
-        if obligation.hasEnded(today) then Right(obligation)
-        else Left(taxPeriodNotEnded)
